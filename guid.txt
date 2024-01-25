@@ -1,0 +1,33 @@
+
+
+
+# required special packages
+streamlit
+streamlit_folium
+resourcecode
+
+# to run the app ( run below line in terminal )
+streamlit run app.py
+
+
+
+
+
+
+
+
+
+
+### Special case
+
+# Permission
+Set-ExecutionPolicy RemoteSigned
+
+# evironment
+env\Scripts\activate
+
+# Run the application
+streamlit run app.py
+
+# installing guid
+python -m pip install streamlit
