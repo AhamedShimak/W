@@ -17,7 +17,7 @@ resourcecode.Client()
 ####################################################
 ####################################################
 
-image_path = "Assets\Logo.png"  # Replace with the actual path to your image
+image_path = "Assets/Logo.png"  # Replace with the actual path to your image
 st.set_page_config(layout="wide",page_title='Weptos research studio', page_icon = "Assets\mono.png")
 st.image(image_path, width=300)
 
@@ -56,7 +56,7 @@ with st.expander("Wave Configuration "):
 
     with tab1:
 
-        loaded_collection = WaveLocationScatterCollection.load_from_json("Database\location_collection.json")
+        loaded_collection = WaveLocationScatterCollection.load_from_json("Database/location_collection.json")
 
         if loaded_collection:
             st.subheader("Location Selection")
@@ -163,7 +163,7 @@ with st.expander("Wave Configuration "):
 
         st.header("Location control")
         # Load WaveLocationScatterCollection from JSON file
-        location_collection = WaveLocationScatterCollection.load_from_json("Database\location_collection.json")
+        location_collection = WaveLocationScatterCollection.load_from_json("Database/location_collection.json")
 
 
 
@@ -227,7 +227,7 @@ with st.expander("Wave Configuration "):
                     i_new_location.location_scatter=i_location_scatter
 
                     # Save the updated collection to the JSON file
-                    location_collection.save_to_json('Database\location_collection.json')
+                    location_collection.save_to_json('Database/location_collection.json')
                     st.success(f"Location '{i_location_name}' added successfully!")
 
 
@@ -252,7 +252,7 @@ with st.expander("Wave Configuration "):
                         location_collection.location_scatters.pop(selected_location_index)
 
                         # Save the updated collection to the JSON file
-                        location_collection.save_to_json('Database\location_collection.json')
+                        location_collection.save_to_json('Database/location_collection.json')
 
                         st.success(f"Location '{removed_location_name}' removed successfully!")
                     else:
@@ -412,7 +412,7 @@ with st.expander("Wave Configuration "):
                     r_new_location.location_scatter=r_location_scatter
     
                     # Save the updated collection to the JSON file
-                    location_collection.save_to_json('Database\location_collection.json')
+                    location_collection.save_to_json('Database/location_collection.json')
                     st.success(f"Location '{r_location_name}' added successfully!")
                     # Export the DataFrame to an Excel file
                     #df.to_excel(excel_file_path)
