@@ -401,7 +401,7 @@ with st.expander("Wave Configuration "):
                     r_new_location.location_scatter=r_location_scatter
     
                     # Save the updated collection to the JSON file
-                    #location_collection.save_to_json('Database/location_collection.json')
+                    location_collection.save_to_json('Database/location_collection.json')
 
                     st.success(f"Location '{r_location_name}' added successfully!")
                     # Export the DataFrame to an Excel file
