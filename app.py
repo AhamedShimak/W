@@ -18,7 +18,7 @@ resourcecode.Client()
 ####################################################
 
 image_path = "Assets/Logo.png"  # Replace with the actual path to your image
-st.set_page_config(layout="wide",page_title='Weptos research studio', page_icon = "Assets\mono.png")
+st.set_page_config(layout="wide",page_title='Weptos research studio V 1.0 Beta', page_icon = "Assets/mono.png")
 st.image(image_path, width=300)
 
 ####################################################
@@ -83,7 +83,7 @@ with st.expander("Wave Configuration "):
             (Hm0_start_value, Hm0_step_size, Tx_start_value, Tx_step_size) = (location.Hm0_start_value,location.Hm0_step_size, location.Tx_start_value, location.Tx_step_size)
             (Tm_array,Tp_array,Te_array,Hm0_array)=location.get_axis()
 
-            col3,  col1 = st.columns([3,5])
+            col3,  col1 = st.columns([4,5])
 
             with col1:
                 
@@ -103,8 +103,8 @@ with st.expander("Wave Configuration "):
 
                     col1.write(f"**Hm0 Start Value:** {Hm0_start_value}")
                     col2.write(f"**Hm0 Step Size:** {Hm0_step_size}")
-                    col3.write(f"**Tx Start Value:** {Tx_start_value}")
-                    col4.write(f"**Tx Step Size:** {Tx_step_size}")
+                    col3.write(f"**Tm Start Value:** {Tx_start_value}")
+                    col4.write(f"**Tm Step Size:** {Tx_step_size}")
 
             
                 display_axis_details()            
