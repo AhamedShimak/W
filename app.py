@@ -11,6 +11,7 @@ import resourcecode
 import math
 import folium
 from streamlit_folium import st_folium
+from streamlit_folium import folium_static 
 
 
 resourcecode.Client()
@@ -50,11 +51,11 @@ with st.expander("Wave Configuration "):
     st.subheader("Wave Configuration")
     st.write("In the Wave Configuration section, you can choose places from the list and check if they have enough power. You're in control here – add or remove locations easily. This way, the information stays up-to-date and fits what you need. It's a straightforward way to manage and understand power resources in different areas.")
 
-    tab1, tab2, tab3 = st.tabs(["selection", "Location control ADD/Remove", "ResourceCode"])
+    selection, resousecode, managment = st.tabs(["selection", "ResourceCode", "Location control ADD/Remove"])
 
 
 
-    with tab1:
+    with selection:
 
         loaded_collection = WaveLocationScatterCollection.load_from_json("Database/location_collection.json")
 
@@ -117,7 +118,6 @@ with st.expander("Wave Configuration "):
                 # map
                 #st.map(locations_df)
                 st.write("Available locations for analysis")
-                from streamlit_folium import folium_static
                 
                 
                 # Create a Folium map
@@ -158,7 +158,7 @@ with st.expander("Wave Configuration "):
             
         
 
-    with tab2:
+    with managment:
 
 
         st.header("Location control")
@@ -255,158 +255,183 @@ with st.expander("Wave Configuration "):
                         location_collection.save_to_json('Database/location_collection.json')
 
                         st.success(f"Location '{removed_location_name}' removed successfully!")
+                        st.rerun()
                     else:
                         st.warning("Selected location not found!")
 
 
 
-    with tab3:
-        frac=st.slider("Fraction of Data of visible",
+    with resousecode:
+        frac=st.slider("Fraction of Data of visible (slide to show the map)",
                   min_value=0.001, max_value=0.01, step=0.0005)
         data=resourcecode.get_grid_spec()
         sample_data=data.sample(frac=frac, random_state=42)
-        col1, col2= st.columns(2)
+        col1, col2= st.columns([2, 5])
         with col1:
-            map_center = [56.481, 8.058]
-            #my_map = folium.Map(location=map_center, zoom_start=12)
-            m = folium.Map(location=map_center, zoom_start=4, tiles="CartoDB Positron")
+            with st.container(height=700):
+                map_center = [56.481, 8.058]
+                #my_map = folium.Map(location=map_center, zoom_start=12)
+                m = folium.Map(location=map_center, zoom_start=4, tiles="CartoDB Positron")
 
-            for index, row in sample_data.iterrows():
-                folium.CircleMarker(
-                    location=[row['latitude'], row['longitude']],
-                    radius=3,  # Adjust the radius as needed
-                    color='transperent',  # Change the color if desired
-                    fill=True,
-                    fill_color='blue',
-                    fill_opacity=0.2,
-                    popup=f"Location: {row['name']}",
-                ).add_to(m)    
-    
-            st_data = st_folium(m)
+                for index, row in sample_data.iterrows():
+                    folium.CircleMarker(
+                        location=[row['latitude'], row['longitude']],
+                        radius=3,  # Adjust the radius as needed
+                        color='transperent',  # Change the color if desired
+                        fill=True,
+                        fill_color='blue',
+                        fill_opacity=0.2,
+                        popup=f"Location: {row['name']}",
+                    ).add_to(m)    
+        
+                st_data = st_folium(m)
 
-    
+        
 
 
-            # call to render Folium map in Streamlit
-            
+                # call to render Folium map in Streamlit
+                
 
         with col2:
-            
-            if st_data['last_clicked'] is not None:
-                closest_location = resourcecode.get_closest_station(latitude=st_data['last_clicked']['lat'], longitude=st_data['last_clicked']['lng'])
-                pointId=resourcecode.data.get_closest_point(latitude=st_data['last_clicked']['lat'], longitude=st_data['last_clicked']['lng'])[0]
-                # Find the corresponding location name in your DataFrame
-                # Assuming the DataFrame has columns 'latitude', 'longitude', and 'name'
- 
-                closest_location_name = closest_location[0]
-                closest_location = data[data['name'] == closest_location_name]
-            
-                # Display the result in Streamlit
-                if not closest_location.empty:
-                    closest_location_name = closest_location['name'].iloc[0]
-                    st.write(f"Closest Station Name :  {closest_location_name}   \n Latitude : {closest_location['latitude'].iloc[0]}  \n Longitude : {closest_location['longitude'].iloc[0]} ")
-                else:
-                    st.write("No matching location found in the DataFrame.")
-                    st.write("No matching location found in the DataFrame.")
-
-                r_loc_name=st.text_input(label="Name of location ",value="LOCATION_NAME")
-                r_location_name=r_loc_name+ "  " + closest_location['name'].iloc[0]
-            
-                if st.button("Add to the Data base"):
-                    #confirmation = st.checkbox(f"Are you sure you want to add '{r_location_name}' to the database?")
-                    #if confirmation:                    
-                    def generate_scatter(pointId):
-                        par1 = "hs"  # significant wave height
-                        par2 = "t02" # wave period options: "t02" (mean period) "t0m1" (energy period) "t01" (mean period)
-                        par3 = "dp"  # wave direction option: "dir" (mean direction) "dp" (direction at peak period)
-                        par4 = "cge" # wave power
-        
-                        client=resourcecode.Client()
-                        query_string = f"""
-                        {{
-                        "node": {pointId},
-                        "parameter": ["{par1}", "{par2}", "{par3}", "{par4}"]
-                        }}
-                        """
-                        data = client.get_dataframe_from_criteria(query_string)
-        
-                        grid_info = resourcecode.data.get_grid_field()
-                        grid_info = grid_info.set_index(grid_info.columns[0])
-                        # Print statistics
-                        st.write(f"Hs Min:", data[par1].min())
-                        st.write(f"Hs Max:", data[par1].max())
-                        st.write(f"Tm Min:", data[par2].min())
-                        st.write(f"Tm Max:", data[par2].max())
-                        st.write("Pwave Mean:", data[par4].mean())
-
-                        # Generate scatter diagram from data
-                        #x = np.random.rand(10000)  # Example x-axis data
-                        #y = np.random.rand(10000)  # Example y-axis data
-                        x = data[par2]  # Example x-axis data
-                        y = data[par1]  # Example y-axis data
-
-                        x_max = math.ceil(data[par2].max() / 2) * 2
-                        y_max = math.ceil(data[par1].max() / 2) * 2
-        
-                        # Define intervals for both axes
-                        x_intervals = np.linspace(0, x_max, 1*x_max+1)  # Divide x-axis into n intervals
-                        y_intervals = np.linspace(0, y_max, 2*y_max+1)  # Divide y-axis into n intervals
-        
-                        # Calculate bivariate probabilities
-                        bivariate_probs = np.zeros((len(x_intervals) - 1, len(y_intervals) - 1))
-        
-                        for i in range(len(x_intervals) - 1):
-                            for j in range(len(y_intervals) - 1):
-                                x_in_interval = (x >= x_intervals[i]) & (x < x_intervals[i + 1])
-                                y_in_interval = (y >= y_intervals[j]) & (y < y_intervals[j + 1])
-                                bivariate_probs[i, j] = np.mean(x_in_interval & y_in_interval)
-        
-
-                        # Convert the bivariate_probs array to a DataFrame. x / y values set central in interval
-                        df=[]
-                        df = pd.DataFrame(bivariate_probs.T, index=(y_intervals[:-1]+(y_intervals[0]+y_intervals[1])/2), columns=x_intervals[:-1]+(x_intervals[0]+x_intervals[1])/2)
-                        r_Hm0=(y_intervals[0]+y_intervals[1])/2
-                        r_Tx=(x_intervals[0]+x_intervals[1])/2
-                        return bivariate_probs.T,df,r_Hm0,r_Tx
-                    
-                    r_location_scatter,full_scat,r_Hm0,r_Tx=generate_scatter(pointId)
-                    r_lat=closest_location['latitude'].iloc[0]
-                    r_lng=closest_location['longitude'].iloc[0]
-                    r_dataset_duration=25
-                    r_water_depth=closest_location['depth'].iloc[0]
-                    r_Hm0_start_value=r_Hm0
-                    r_Hm0_step_size=0.5
-                    r_Tx_start_value=r_Tx
-                    r_Tx_step_size=1
-                    st.write(r_Hm0,r_Tx)
-                    st.write(full_scat)
-                    
-                        
-                    r_location_scatter = np.array(r_location_scatter)
-                    # Create a new location object with scatter diagram data
-                    r_new_location = WaveLocationScatter(
-                        r_location_name,
-                        r_lat,
-                        r_lng,
-                        r_dataset_duration,
-                        r_water_depth,
-                        r_Hm0_start_value,
-                        r_Hm0_step_size,
-                        r_Tx_start_value,
-                        r_Tx_step_size
-                    )
+            with st.container(height=700):
+                st.write("Pick a location on map to add nearby station data to Data base")
+                if st_data['last_clicked'] is not None:
+                    closest_location = resourcecode.get_closest_station(latitude=st_data['last_clicked']['lat'], longitude=st_data['last_clicked']['lng'])
+                    pointId=resourcecode.data.get_closest_point(latitude=st_data['last_clicked']['lat'], longitude=st_data['last_clicked']['lng'])[0]
+                    # Find the corresponding location name in your DataFrame
+                    # Assuming the DataFrame has columns 'latitude', 'longitude', and 'name'
     
-                    # Add the new location to the collection
-                    location_collection.add_location_scatter(r_new_location)
-                    r_new_location.location_scatter=r_location_scatter
-    
-                    # Save the updated collection to the JSON file
-                    location_collection.save_to_json('Database/location_collection.json')
-
-                    st.success(f"Location '{r_location_name}' added successfully!")
-                    # Export the DataFrame to an Excel file
-                    #df.to_excel(excel_file_path)
+                    closest_location_name = closest_location[0]
+                    closest_location = data[data['name'] == closest_location_name]
                 
+                    # Display the result in Streamlit
+                    if not closest_location.empty:
+                        closest_location_name = closest_location['name'].iloc[0]
+                        st.write(f"Closest Station Name :  {closest_location_name}   \n Latitude : {closest_location['latitude'].iloc[0]}  \n Longitude : {closest_location['longitude'].iloc[0]} ")
+                    else:
+                        st.write("No matching location found in the DataFrame.")
+                        st.write("No matching location found in the DataFrame.")
+
+                    r_loc_name=st.text_input(label="Name of location ",value="LOCATION_NAME")
+                    r_location_name=r_loc_name+ "  " + closest_location['name'].iloc[0]
+                    with st.container(height=250 ):
+                                        # Create a Folium map
+                        m2 = folium.Map(location=[closest_location['latitude'].iloc[0], closest_location['longitude'].iloc[0]],
+                                        tiles= "CartoDB Positron",
+                                        zoom_start=8, height=220)
+                        
+                        # Add markers to the map
+                        folium.CircleMarker(
+                                [closest_location['latitude'].iloc[0], closest_location['longitude'].iloc[0]],
+                                radius=5,  # Adjust the radius as needed
+                                color='orange',  # Change the color if desired
+                                fill=True,
+                                fill_color='orange',
+                                fill_opacity=1,
+                                popup=r_location_name,
+                            ).add_to(m2)
+                        
+                        # Display the Folium map in Streamlit
+                        folium_static(m2)
+
+
+                    if st.button("Add to the Data base"):
+                        st.warning('Clicking anything may affect the progress', icon="⚠️")
+
+                        #confirmation = st.checkbox(f"Are you sure you want to add '{r_location_name}' to the database?")
+                        #if confirmation:                    
+                        def generate_scatter(pointId):
+                            par1 = "hs"  # significant wave height
+                            par2 = "t02" # wave period options: "t02" (mean period) "t0m1" (energy period) "t01" (mean period)
+                            par3 = "dp"  # wave direction option: "dir" (mean direction) "dp" (direction at peak period)
+                            par4 = "cge" # wave power
+            
+                            client=resourcecode.Client()
+                            query_string = f"""
+                            {{
+                            "node": {pointId},
+                            "parameter": ["{par1}", "{par2}", "{par3}", "{par4}"]
+                            }}
+                            """
+                            data = client.get_dataframe_from_criteria(query_string)
+
+                            grid_info = resourcecode.data.get_grid_field()
+                            grid_info = grid_info.set_index(grid_info.columns[0])
+                            st.success(f"Dowloaded the data successfully!")
+                            # Print statistics
+                            st.write(f"Hs Min:", data[par1].min(),f"Hs Max:", data[par1].max())
+                            st.write(f"Tm Min:", data[par2].min(),f"Tm Max:", data[par2].max())
+                            st.write("Pwave Mean:", data[par4].mean())
+
+                            # Generate scatter diagram from data
+                            #x = np.random.rand(10000)  # Example x-axis data
+                            #y = np.random.rand(10000)  # Example y-axis data
+                            x = data[par2]  # Example x-axis data
+                            y = data[par1]  # Example y-axis data
+
+                            x_max = math.ceil(data[par2].max() / 2) * 2
+                            y_max = math.ceil(data[par1].max() / 2) * 2
+            
+                            # Define intervals for both axes
+                            x_intervals = np.linspace(0, x_max, 1*x_max+1)  # Divide x-axis into n intervals
+                            y_intervals = np.linspace(0, y_max, 2*y_max+1)  # Divide y-axis into n intervals
+            
+                            # Calculate bivariate probabilities
+                            bivariate_probs = np.zeros((len(x_intervals) - 1, len(y_intervals) - 1))
+            
+                            for i in range(len(x_intervals) - 1):
+                                for j in range(len(y_intervals) - 1):
+                                    x_in_interval = (x >= x_intervals[i]) & (x < x_intervals[i + 1])
+                                    y_in_interval = (y >= y_intervals[j]) & (y < y_intervals[j + 1])
+                                    bivariate_probs[i, j] = np.mean(x_in_interval & y_in_interval)
+            
+
+                            # Convert the bivariate_probs array to a DataFrame. x / y values set central in interval
+                            df=[]
+                            df = pd.DataFrame(bivariate_probs.T, index=(y_intervals[:-1]+(y_intervals[0]+y_intervals[1])/2), columns=x_intervals[:-1]+(x_intervals[0]+x_intervals[1])/2)
+                            r_Hm0=(y_intervals[0]+y_intervals[1])/2
+                            r_Tx=(x_intervals[0]+x_intervals[1])/2
+                            return bivariate_probs.T,df,r_Hm0,r_Tx
+                        with st.spinner('Downloading data from resourcecode!'):
+                            r_location_scatter,full_scat,r_Hm0,r_Tx=generate_scatter(pointId)
+                        r_lat=closest_location['latitude'].iloc[0]
+                        r_lng=closest_location['longitude'].iloc[0]
+                        r_dataset_duration=25
+                        r_water_depth=closest_location['depth'].iloc[0]
+                        r_Hm0_start_value=r_Hm0
+                        r_Hm0_step_size=0.5
+                        r_Tx_start_value=r_Tx
+                        r_Tx_step_size=1
+                        st.write(f"Hs start: {r_Hm0},Tm start {r_Tx}")
+                        st.write(full_scat)
+                        
+                            
+                        r_location_scatter = np.array(r_location_scatter)
+                        # Create a new location object with scatter diagram data
+                        r_new_location = WaveLocationScatter(
+                            r_location_name,
+                            r_lat,
+                            r_lng,
+                            r_dataset_duration,
+                            r_water_depth,
+                            r_Hm0_start_value,
+                            r_Hm0_step_size,
+                            r_Tx_start_value,
+                            r_Tx_step_size
+                        )
+        
+                        # Add the new location to the collection
+                        location_collection.add_location_scatter(r_new_location)
+                        r_new_location.location_scatter=r_location_scatter
+        
+                        # Save the updated collection to the JSON file
+                        location_collection.save_to_json('Database/location_collection.json')
+
+                        st.success(f"Location '{r_location_name}' added successfully!")
+
+                        # Export the DataFrame to an Excel file
+                        #df.to_excel(excel_file_path)
+                    
 
 
 
